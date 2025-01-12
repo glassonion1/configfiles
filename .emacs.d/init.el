@@ -10,6 +10,9 @@
 
 (setq-default indent-tabs-mode nil)
 
+;; 末尾スペースの可視化
+(setq-default show-trailing-whitespace t)
+
 (windmove-default-keybindings)
 (setq windmove-wrap-around t)
 
@@ -43,6 +46,9 @@
     use-package
     exec-path-from-shell
     dracula-theme
+    solarized-theme
+    material-theme
+    doom-themes
     ))
 ;; my/favorite-packagesからインストールしていないパッケージをインストール
 (dolist (package my/favorite-packages)
@@ -60,7 +66,8 @@
   (setq file-name-coding-system 'utf-8-hfs)
   (setq local-coding-system 'utf-8-hfs))
 ;; テーマと色
-(load-theme 'dracula t)
+;(load-theme 'material t)
+(load-theme 'doom-dracula t)
 
 ;; 全角スペース タブ trailing-spacesを目立たせる
 (use-package whitespace
@@ -76,12 +83,6 @@
   (set-face-foreground 'whitespace-tab "LightSlateGray")
   (set-face-background 'whitespace-tab "DarkSlateGray"))
 (global-whitespace-mode 1)
-
-(use-package rainbow-mode
-  :straight t
-  :init
-  (add-hook 'web-mode-hook 'rainbow-mode)
-  )
 
 ;; neotree
 (use-package neotree
@@ -101,9 +102,9 @@
   :straight t
   :hook
   ((rust-mode . lsp)
-   (go-mode . lsp)
-   (python-mode . lsp)
-   ;(web-mode . lsp)
+   (go-ts-mode . lsp)
+   (python-ts-mode . lsp)
+   (tsx-ts-mode . lsp)
    )
   :custom
   (lsp-rust-server 'rls)
@@ -113,6 +114,7 @@
 (use-package flycheck
   :straight t)
 
+;; 入力補完
 (use-package corfu
   :straight (corfu :type git
                    :host github
@@ -134,6 +136,10 @@
   (with-eval-after-load 'lsp-mode
     (setq lsp-completion-provider :none)))
 
+(use-package corfu-popupinfo
+  :after corfu
+  :hook (corfu-mode . corfu-popupinfo-mode))
+
 (use-package kind-icon
   :straight t
   :after corfu
@@ -141,15 +147,38 @@
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
+;; Treesitの設定
+(setq treesit-language-source-alist
+      '((json "https://github.com/tree-sitter/tree-sitter-json")
+        (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+        (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+        (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+        (go "https://github.com/tree-sitter/tree-sitter-go")
+        (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+        (python "https://github.com/tree-sitter/tree-sitter-python")
+        (html "https://github.com/tree-sitter/tree-sitter-html")
+        (css "https://github.com/tree-sitter/tree-sitter-css")
+        ))
+
+(dolist (element treesit-language-source-alist)
+  (let* ((lang (car element)))
+    (if (treesit-language-available-p lang)
+        (message "tree-sistter: %s is already installed" lang)
+      (message "tree-sitter: %s is not installed" lang)
+      (treesit-install-language-grammar lang))))
+(use-package treesit
+  :config
+  (setq treesit-font-lock-level 4))
+
 ;; python-black
 (use-package python-black
   :straight t)
 ;; python-mode
-(use-package python-mode
-  :straight t
-  :mode ("\\.py$" . python-mode)
+(use-package python-ts-mode
+  :mode ("\\.py$" . python-ts-mode)
   :hook
-  (python-mode . python-black-on-save-mode))
+  (python-ts-mode . python-black-on-save-mode))
 
 ;; rust-mode
 (use-package rust-mode
@@ -162,10 +191,9 @@
   (rust-mode . cargo-minor-mode))
 
 ;; go-mode
-(use-package go-mode
-  :straight t
+(use-package go-ts-mode
   :mode
-  ("\\.go$" . go-mode)
+  ("\\.go$" . go-ts-mode)
   :hook
   (before-save . gofmt-before-save)
   :custom
@@ -180,12 +208,25 @@
   (terraform-mode . terraform-format-on-save-mode))
 
 ;; yaml-mode
-(use-package yaml-mode
+(use-package yaml-ts-mode
   :straight t
   :mode
-  ("\\.ya?ml$" . yaml-mode)
+  ("\\.ya?ml$" . yaml-ts-mode)
   :config
-  (define-key yaml-mode-map "\C-m" 'newline-and-indent))
+  (define-key yaml-ts-mode-map "\C-m" 'newline-and-indent))
+
+;; json-mode
+(use-package json-ts-mode
+  :straight t
+  :mode
+  ("\\.json\\'" . json-ts-mode)
+  :config
+  (add-hook 'json-ts-mode-hook
+            (lambda ()
+              (make-local-variable 'js-indent-level)
+              (setq tab-width 2)
+              (setq js-indent-level 2)))
+  )
 
 ;; protobuf-mode
 (defconst my-protobuf-style
@@ -215,11 +256,6 @@
       (shell-quote-argument (expand-file-name buffer-file-name))))
   (revert-buffer t t t))
 
-(defun my/web-mode-tsx-hook ()
-  (let ((ext (file-name-extension buffer-file-name)))
-    (when (or (string-equal "ts" ext) (string-equal "tsx" ext))
-      (lsp))))
-
 ;; work around ts-ls bug
 (advice-add 'json-parse-buffer :around
               (lambda (orig &rest rest)
@@ -227,35 +263,16 @@
                   (replace-match ""))
                 (apply orig rest)))
 
-;; web-mode
-(use-package web-mode
-  :straight t
-  :init
-  (setq web-mode-enable-auto-indentation nil)
-  :mode (("\\.html?\\'" . web-mode)
-         ("\\.json\\'" . web-mode)
-         ("\\.css\\'" . web-mode)
-         ("\\.ts[x]?\\'" . web-mode)
-         ("\\.js[x]?\\'" . web-mode)
-         ("\\.[mc]js\\'" . web-mode))
-  :custom
-  (web-mode-attr-indent-offset nil)
-  (web-mode-enable-auto-closing t)
-  (web-mode-enable-auto-pairing t)
-  (web-mode-auto-close-style 2)
-  (web-mode-tag-auto-close-style 2)
-  (web-mode-markup-indent-offset 2)
-  (web-mode-css-indent-offset 2)
-  (web-mode-code-indent-offset 2)
-  (web-mode-enable-current-element-highlight t)
-  (electric-indent-mode -1)
-  (tab-width 2)
+(use-package tsx-ts-mode
+  :mode (("\\.ts[x]?\\'" . tsx-ts-mode)
+         ("\\.[m]ts\\'" . tsx-ts-mode)
+         ("\\.js[x]?\\'" . tsx-ts-mode)
+         ("\\.[mc]js\\'" . tsx-ts-mode))
   :config
-  (add-hook 'web-mode-hook
+  (setq typescript-ts-mode-indent-offset 2)
+  (add-hook 'tsx-ts-mode-hook
             (lambda ()
               (add-hook 'after-save-hook 'my/prettier t t)))
-  :hook
-  (web-mode . my/web-mode-tsx-hook)
   )
 
 ;; docker-mode
