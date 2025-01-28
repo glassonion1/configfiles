@@ -68,22 +68,24 @@
 
 ;; テーマと色
 ;(load-theme 'material t)
-;(load-theme 'doom-dracula t)
+(load-theme 'doom-dracula t)
+;(load-theme 'dracula t)
+;(load-theme 'doom-plain-dark t)
 
 ;; テーマの設定
-(use-package modus-themes
-  :config
-  ;; Add all your customizations prior to loading the themes
-  (setq modus-themes-italic-constructs t
-        modus-themes-bold-constructs t
-        modus-themes-mixed-fonts nil
-        modus-themes-variable-pitch-ui t
-        modus-themes-custom-auto-reload t
-        modus-themes-disable-other-themes t
-        )
-  ;; Load the theme of your choice.
-  (load-theme 'modus-vivendi :no-confirm)
-  (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
+;(use-package modus-themes
+;  :config
+;  ;; Add all your customizations prior to loading the themes
+;  (setq modus-themes-italic-constructs t
+;        modus-themes-bold-constructs t
+;        modus-themes-mixed-fonts nil
+;        modus-themes-variable-pitch-ui t
+;        modus-themes-custom-auto-reload t
+;        modus-themes-disable-other-themes t
+;        )
+;  ;; Load the theme of your choice.
+;  (load-theme 'modus-vivendi :no-confirm)
+;  (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
 
 ;; 全角スペース タブ trailing-spacesを目立たせる
 (use-package whitespace
@@ -118,7 +120,7 @@
   :straight t
   :hook
   ((rust-mode . lsp)
-   (go-ts-mode . lsp)
+   (go-mode . lsp)
    (python-ts-mode . lsp)
    (tsx-ts-mode . lsp)
    )
@@ -174,8 +176,8 @@
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
-        (go "https://github.com/tree-sitter/tree-sitter-go")
-        (gomod "https://github.com/camdencheek/tree-sitter-go-mod")
+        ;(go "https://github.com/tree-sitter/tree-sitter-go")
+        ;(gomod "https://github.com/camdencheek/tree-sitter-go-mod")
         (python "https://github.com/tree-sitter/tree-sitter-python")
         (html "https://github.com/tree-sitter/tree-sitter-html")
         (css "https://github.com/tree-sitter/tree-sitter-css")
@@ -210,14 +212,22 @@
   :hook
   (rust-mode . cargo-minor-mode))
 
-;; go-mode
-(use-package go-ts-mode
+;; go-mode go-ts-modeはインデントがいまいちなので導入見送り
+(use-package go-mode
+  :straight t
   :mode
-  ("\\.go$" . go-ts-mode)
+  ("\\.go$" . go-mode)
   :hook
   (before-save . gofmt-before-save)
   :custom
-  (gofmt-command "goimports"))
+  (gofmt-command "goimports")
+  :config
+  (add-hook 'go-mode-hook
+            (lambda ()
+              (setq indent-tabs-mode nil)
+              (setq c-basic-offset 4)
+              (setq tab-width 4)))
+  )
 
 ;; terraform-mode
 (use-package terraform-mode
@@ -249,9 +259,6 @@
   )
 
 ;; protobuf-mode
-(defconst my-protobuf-style
-  '((c-basic-offset . 2)
-    (indent-tabs-mode . nil)))
 (use-package protobuf-mode
   :straight t
   :init

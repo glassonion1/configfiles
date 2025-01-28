@@ -15,7 +15,7 @@ path=(
   /Library/Apple/usr/bin
 )
 
-export GOROOT=/usr/local/go                                                 
+export GOROOT=/usr/local/go
 export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
@@ -104,16 +104,11 @@ setopt interactive_comments
 # launch emacs on commandline
 alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs -nw"
 
-USERNAME=$(whoami)
+# データベース関連のパス設定(mysql & postgres)
 export PATH="/usr/local/opt/mysql-client/bin:$PATH"
-
-# pnpm
-export PNPM_HOME="/Users/t.fujita/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
+export PATH="/usr/local/opt/libpq/bin:$PATH"
+# for M1 Mac
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/taisukefujita/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/taisukefujita/google-cloud-sdk/path.zsh.inc'; fi
