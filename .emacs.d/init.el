@@ -70,22 +70,6 @@
 ;(load-theme 'material t)
 (load-theme 'doom-dracula t)
 ;(load-theme 'dracula t)
-;(load-theme 'doom-plain-dark t)
-
-;; テーマの設定
-;(use-package modus-themes
-;  :config
-;  ;; Add all your customizations prior to loading the themes
-;  (setq modus-themes-italic-constructs t
-;        modus-themes-bold-constructs t
-;        modus-themes-mixed-fonts nil
-;        modus-themes-variable-pitch-ui t
-;        modus-themes-custom-auto-reload t
-;        modus-themes-disable-other-themes t
-;        )
-;  ;; Load the theme of your choice.
-;  (load-theme 'modus-vivendi :no-confirm)
-;  (define-key global-map (kbd "<f5>") #'modus-themes-toggle))
 
 ;; 全角スペース タブ trailing-spacesを目立たせる
 (use-package whitespace
@@ -193,14 +177,28 @@
   :config
   (setq treesit-font-lock-level 4))
 
-;; python-black
-(use-package python-black
-  :straight t)
+;; フォーマッターの設定
+(use-package reformatter
+  :straight t
+  :hook
+  (go-mode . go-format-on-save-mode)
+  (tsx-ts-mode . web-format-on-save-mode)
+  (json-ts-mode . web-format-on-save-mode)
+  (python-ts-mode . python-format-on-save-mode)
+  :config
+  (reformatter-define go-format
+    :program "goimports")
+  (reformatter-define web-format
+    :program "prettier"
+    :args `("--write" "--stdin-filepath" ,buffer-file-name))
+  (reformatter-define python-format
+    :program "ruff"
+    :args `("format" "--stdin-filename" ,buffer-file-name "-"))
+  )
+
 ;; python-mode
 (use-package python-ts-mode
-  :mode ("\\.py$" . python-ts-mode)
-  :hook
-  (python-ts-mode . python-black-on-save-mode))
+  :mode ("\\.py$" . python-ts-mode))
 
 ;; rust-mode
 (use-package rust-mode
@@ -217,10 +215,6 @@
   :straight t
   :mode
   ("\\.go$" . go-mode)
-  :hook
-  (before-save . gofmt-before-save)
-  :custom
-  (gofmt-command "goimports")
   :config
   (add-hook 'go-mode-hook
             (lambda ()
@@ -277,14 +271,6 @@
   :mode
   ("\\.graphqls$" . graphql-mode))
 
-(defun my/prettier ()
-  (interactive)
-  (shell-command
-    (format "%s --write %s"
-      (shell-quote-argument (executable-find "prettier"))
-      (shell-quote-argument (expand-file-name buffer-file-name))))
-  (revert-buffer t t t))
-
 ;; work around ts-ls bug
 (advice-add 'json-parse-buffer :around
               (lambda (orig &rest rest)
@@ -298,27 +284,10 @@
          ("\\.js[x]?\\'" . tsx-ts-mode)
          ("\\.[mc]js\\'" . tsx-ts-mode))
   :config
-  (setq typescript-ts-mode-indent-offset 2)
-  (add-hook 'tsx-ts-mode-hook
-            (lambda ()
-              (add-hook 'after-save-hook 'my/prettier t t)))
-  )
+  (setq typescript-ts-mode-indent-offset 2))
 
 ;; docker-mode
 (use-package dockerfile-mode
   :straight t
   :mode
   ("Dockerfile\\'" . dockerfile-mode))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("a75aff58f0d5bbf230e5d1a02169ac2fbf45c930f816f3a21563304d5140d245" "2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7" "fbf73690320aa26f8daffdd1210ef234ed1b0c59f3d001f342b9c0bbf49f531c" default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
