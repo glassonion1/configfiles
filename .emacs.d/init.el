@@ -43,7 +43,6 @@
 ;; インストールするパッケージのリスト
 (defvar my/favorite-packages
   '(
-    use-package
     exec-path-from-shell
     dracula-theme
     solarized-theme
@@ -180,11 +179,6 @@
 ;; フォーマッターの設定
 (use-package reformatter
   :straight t
-  :hook
-  (go-mode . go-format-on-save-mode)
-  (tsx-ts-mode . web-format-on-save-mode)
-  (json-ts-mode . web-format-on-save-mode)
-  (python-ts-mode . python-format-on-save-mode)
   :config
   (reformatter-define go-format
     :program "goimports")
@@ -193,22 +187,12 @@
     :args `("--write" "--stdin-filepath" ,buffer-file-name))
   (reformatter-define python-format
     :program "ruff"
-    :args `("format" "--stdin-filename" ,buffer-file-name "-"))
-  )
-
-;; python-mode
-(use-package python-ts-mode
-  :mode ("\\.py$" . python-ts-mode))
-
-;; rust-mode
-(use-package rust-mode
-  :straight t
-  :custom
-  (rust-format-on-save t))
-(use-package cargo
-  :straight t
+    :args `("format" "--stdin-filename" ,buffer-file-name))
   :hook
-  (rust-mode . cargo-minor-mode))
+  (go-mode . go-format-on-save-mode)
+  (tsx-ts-mode . web-format-on-save-mode)
+  (json-ts-mode . web-format-on-save-mode)
+  (python-ts-mode . python-format-on-save-mode))
 
 ;; go-mode go-ts-modeはインデントがいまいちなので導入見送り
 (use-package go-mode
@@ -220,8 +204,54 @@
             (lambda ()
               (setq indent-tabs-mode nil)
               (setq c-basic-offset 4)
-              (setq tab-width 4)))
-  )
+              (setq tab-width 4))))
+
+;; python-ts-mode
+(use-package python-ts-mode
+  :mode ("\\.py$" . python-ts-mode))
+
+;; json-ts-mode
+(use-package json-ts-mode
+  :mode
+  ("\\.json\\'" . json-ts-mode)
+  :config
+  (add-hook 'json-ts-mode-hook
+            (lambda ()
+              (make-local-variable 'js-indent-level)
+              (setq tab-width 2)
+              (setq js-indent-level 2))))
+
+;; tsx-ts-mode
+(use-package tsx-ts-mode
+  :mode (("\\.ts[x]?\\'" . tsx-ts-mode)
+         ("\\.[m]ts\\'" . tsx-ts-mode)
+         ("\\.js[x]?\\'" . tsx-ts-mode)
+         ("\\.[mc]js\\'" . tsx-ts-mode))
+  :config
+  (setq typescript-ts-mode-indent-offset 2))
+
+;; work around ts-ls bug
+(advice-add 'json-parse-buffer :around
+              (lambda (orig &rest rest)
+                (while (re-search-forward "\\u0000" nil t)
+                  (replace-match ""))
+                (apply orig rest)))
+
+;; graphql-mode
+(use-package graphql-mode
+  :straight t
+  :mode
+  ("\\.graphqls$" . graphql-mode))
+
+;; rust-mode
+(use-package rust-mode
+  :straight t
+  :custom
+  (rust-format-on-save t))
+(use-package cargo
+  :straight t
+  :hook
+  (rust-mode . cargo-minor-mode))
 
 ;; terraform-mode
 (use-package terraform-mode
@@ -239,19 +269,6 @@
   :config
   (define-key yaml-ts-mode-map "\C-m" 'newline-and-indent))
 
-;; json-mode
-(use-package json-ts-mode
-  :straight t
-  :mode
-  ("\\.json\\'" . json-ts-mode)
-  :config
-  (add-hook 'json-ts-mode-hook
-            (lambda ()
-              (make-local-variable 'js-indent-level)
-              (setq tab-width 2)
-              (setq js-indent-level 2)))
-  )
-
 ;; protobuf-mode
 (use-package protobuf-mode
   :straight t
@@ -264,27 +281,6 @@
               (setq c-basic-offset 2)
               ))
   )
-
-;; graphql-mode
-(use-package graphql-mode
-  :straight t
-  :mode
-  ("\\.graphqls$" . graphql-mode))
-
-;; work around ts-ls bug
-(advice-add 'json-parse-buffer :around
-              (lambda (orig &rest rest)
-                (while (re-search-forward "\\u0000" nil t)
-                  (replace-match ""))
-                (apply orig rest)))
-
-(use-package tsx-ts-mode
-  :mode (("\\.ts[x]?\\'" . tsx-ts-mode)
-         ("\\.[m]ts\\'" . tsx-ts-mode)
-         ("\\.js[x]?\\'" . tsx-ts-mode)
-         ("\\.[mc]js\\'" . tsx-ts-mode))
-  :config
-  (setq typescript-ts-mode-indent-offset 2))
 
 ;; docker-mode
 (use-package dockerfile-mode
