@@ -192,6 +192,7 @@
   (go-mode . go-format-on-save-mode)
   (tsx-ts-mode . web-format-on-save-mode)
   (json-ts-mode . web-format-on-save-mode)
+  (graphql-mode . web-format-on-save-mode)
   (python-ts-mode . python-format-on-save-mode))
 
 ;; go-mode go-ts-modeはインデントがいまいちなので導入見送り
