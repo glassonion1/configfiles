@@ -99,6 +99,7 @@
 
 ;; lsp-mode
 ;; プロジェクトルートで M-x lsp-workspace-folder-add を実行すること
+;; lsp-restart-workspaceでリスタートできる
 (use-package lsp-mode
   :straight t
   :hook
@@ -199,7 +200,7 @@
 (use-package go-mode
   :straight t
   :mode
-  ("\\.go$" . go-mode)
+  ("\\.go\\'" . go-mode)
   :config
   (add-hook 'go-mode-hook
             (lambda ()
@@ -209,7 +210,7 @@
 
 ;; python-ts-mode
 (use-package python-ts-mode
-  :mode ("\\.py$" . python-ts-mode))
+  :mode ("\\.py\\'" . python-ts-mode))
 
 ;; json-ts-mode
 (use-package json-ts-mode
@@ -224,10 +225,12 @@
 
 ;; tsx-ts-mode
 (use-package tsx-ts-mode
-  :mode (("\\.ts[x]?\\'" . tsx-ts-mode)
-         ("\\.[m]ts\\'" . tsx-ts-mode)
-         ("\\.js[x]?\\'" . tsx-ts-mode)
-         ("\\.[mc]js\\'" . tsx-ts-mode))
+  :mode (("\\.ts\\'" . tsx-ts-mode)
+         ("\\.tsx\\'" . tsx-ts-mode)
+         ("\\.mts\\'" . tsx-ts-mode)
+         ("\\.js\\'" . tsx-ts-mode)
+         ("\\.jsx\\'" . tsx-ts-mode)
+         ("\\.[mc]js$" . tsx-ts-mode))
   :config
   (setq typescript-ts-mode-indent-offset 2))
 
@@ -242,7 +245,9 @@
 (use-package graphql-mode
   :straight t
   :mode
-  ("\\.graphqls$" . graphql-mode))
+  ("\\.graphql\\'" . graphql-mode)
+  ("\\.graphqls\\'" . graphql-mode)
+  )
 
 ;; rust-mode
 (use-package rust-mode
@@ -258,7 +263,7 @@
 (use-package terraform-mode
   :straight t
   :mode
-  ("\\.tf$" . terraform-mode)
+  ("\\.tf\\'" . terraform-mode)
   :hook
   (terraform-mode . terraform-format-on-save-mode))
 
@@ -266,7 +271,8 @@
 (use-package yaml-ts-mode
   :straight t
   :mode
-  ("\\.ya?ml$" . yaml-ts-mode)
+  ("\\.yml\\'" . yaml-ts-mode)
+  ("\\.yaml\\'" . yaml-ts-mode)
   :config
   (define-key yaml-ts-mode-map "\C-m" 'newline-and-indent))
 
@@ -275,7 +281,7 @@
   :straight t
   :init
   :mode
-  ("\\.proto$" . protobuf-mode)
+  ("\\.proto\\'" . protobuf-mode)
   :config
   (add-hook 'protobuf-mode-hook
             (lambda ()
